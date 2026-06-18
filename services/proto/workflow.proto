@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package titan.workflow.v1;
+
+option go_package = "github.com/ChaitanyaJoshi1769/TitanOS/services/workflow/pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+service WorkflowEngineService {
+  rpc CreateWorkflow(CreateWorkflowRequest) returns (CreateWorkflowResponse);
+  rpc ExecuteWorkflow(ExecuteWorkflowRequest) returns (ExecuteWorkflowResponse);
+  rpc GetExecution(GetExecutionRequest) returns (GetExecutionResponse);
+  rpc ListExecutions(ListExecutionsRequest) returns (ListExecutionsResponse);
+  rpc CancelExecution(CancelExecutionRequest) returns (CancelExecutionResponse);
+  rpc GetWorkflow(GetWorkflowRequest) returns (GetWorkflowResponse);
+}
+
+message WorkflowDefinition {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string description = 4;
+  int32 version = 5;
+  repeated Activity activities = 6;
+  repeated Edge edges = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message Activity {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+  google.protobuf.Any config = 4;
+  int32 retry_count = 5;
+  string retry_policy = 6;
+  int32 timeout_seconds = 7;
+}
+
+message Edge {
+  string from_activity = 1;
+  string to_activity = 2;
+  string condition = 3;
+}
+
+message CreateWorkflowRequest {
+  string project_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated Activity activities = 4;
+  repeated Edge edges = 5;
+}
+
+message CreateWorkflowResponse {
+  string workflow_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message ExecuteWorkflowRequest {
+  string workflow_id = 1;
+  string project_id = 2;
+  google.protobuf.Any input_data = 3;
+}
+
+message ExecuteWorkflowResponse {
+  string execution_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message GetExecutionRequest {
+  string execution_id = 1;
+}
+
+message GetExecutionResponse {
+  WorkflowExecution execution = 1;
+}
+
+message ListExecutionsRequest {
+  string workflow_id = 1;
+  string status = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message ListExecutionsResponse {
+  repeated WorkflowExecution executions = 1;
+  int32 total = 2;
+}
+
+message CancelExecutionRequest {
+  string execution_id = 1;
+}
+
+message CancelExecutionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetWorkflowRequest {
+  string workflow_id = 1;
+}
+
+message GetWorkflowResponse {
+  WorkflowDefinition workflow = 1;
+}
+
+message WorkflowExecution {
+  string id = 1;
+  string workflow_id = 2;
+  string project_id = 3;
+  string status = 4;
+  google.protobuf.Any input_data = 5;
+  google.protobuf.Any output_data = 6;
+  string error_message = 7;
+  repeated ActivityExecution activity_executions = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp started_at = 10;
+  google.protobuf.Timestamp completed_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message ActivityExecution {
+  string activity_id = 1;
+  string status = 2;
+  google.protobuf.Any input_data = 3;
+  google.protobuf.Any output_data = 4;
+  string error_message = 5;
+  int32 retry_count = 6;
+  google.protobuf.Timestamp started_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+}
