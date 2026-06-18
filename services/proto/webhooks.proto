@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package titan.webhooks;
+
+import "google/protobuf/timestamp.pb2";
+import "google/protobuf/struct.pb2";
+
+option go_package = "github.com/ChaitanyaJoshi1769/TitanOS/services/proto/webhooks";
+
+service WebhookService {
+  rpc CreateSubscription(CreateSubscriptionRequest) returns (WebhookSubscription);
+  rpc GetSubscription(GetSubscriptionRequest) returns (WebhookSubscription);
+  rpc ListSubscriptions(ListSubscriptionsRequest) returns (ListSubscriptionsResponse);
+  rpc UpdateSubscription(UpdateSubscriptionRequest) returns (WebhookSubscription);
+  rpc DeleteSubscription(DeleteSubscriptionRequest) returns (DeleteSubscriptionResponse);
+  rpc TestWebhook(TestWebhookRequest) returns (TestWebhookResponse);
+  rpc GetDeliveryHistory(GetDeliveryHistoryRequest) returns (DeliveryHistoryResponse);
+  rpc RetryFailedDelivery(RetryFailedDeliveryRequest) returns (RetryFailedDeliveryResponse);
+}
+
+message WebhookSubscription {
+  string subscription_id = 1;
+  string user_id = 2;
+  string project_id = 3;
+  string webhook_url = 4;
+  string event_type_filter = 5;
+  string source_filter = 6;
+  string subject_filter = 7;
+  bool active = 8;
+  string signature_algorithm = 9;
+  RetryPolicy retry_policy = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  string secret_key = 13;
+}
+
+message RetryPolicy {
+  int32 max_retries = 1;
+  int32 initial_delay_ms = 2;
+  int32 max_delay_ms = 3;
+  float backoff_multiplier = 4;
+}
+
+message CreateSubscriptionRequest {
+  string user_id = 1;
+  string project_id = 2;
+  string webhook_url = 3;
+  string event_type_filter = 4;
+  string source_filter = 5;
+  string subject_filter = 6;
+  RetryPolicy retry_policy = 7;
+}
+
+message GetSubscriptionRequest {
+  string subscription_id = 1;
+}
+
+message ListSubscriptionsRequest {
+  string user_id = 1;
+  string project_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListSubscriptionsResponse {
+  repeated WebhookSubscription subscriptions = 1;
+  string next_page_token = 2;
+}
+
+message UpdateSubscriptionRequest {
+  string subscription_id = 1;
+  string webhook_url = 2;
+  string event_type_filter = 3;
+  bool active = 4;
+  RetryPolicy retry_policy = 5;
+}
+
+message DeleteSubscriptionRequest {
+  string subscription_id = 1;
+}
+
+message DeleteSubscriptionResponse {
+  bool success = 1;
+}
+
+message TestWebhookRequest {
+  string subscription_id = 1;
+}
+
+message TestWebhookResponse {
+  bool success = 1;
+  int32 http_status = 2;
+  string response_body = 3;
+  int32 latency_ms = 4;
+}
+
+message GetDeliveryHistoryRequest {
+  string subscription_id = 1;
+  google.protobuf.Timestamp from_time = 2;
+  google.protobuf.Timestamp to_time = 3;
+  string status_filter = 4;
+  int32 limit = 5;
+}
+
+message WebhookDelivery {
+  string delivery_id = 1;
+  string subscription_id = 2;
+  string event_id = 3;
+  int32 attempt_number = 4;
+  string status = 5;
+  int32 http_status = 6;
+  google.protobuf.Timestamp delivered_at = 7;
+  int32 latency_ms = 8;
+  string error_message = 9;
+}
+
+message DeliveryHistoryResponse {
+  repeated WebhookDelivery deliveries = 1;
+}
+
+message RetryFailedDeliveryRequest {
+  string subscription_id = 1;
+  string event_id = 2;
+}
+
+message RetryFailedDeliveryResponse {
+  bool success = 1;
+  string delivery_id = 2;
+}

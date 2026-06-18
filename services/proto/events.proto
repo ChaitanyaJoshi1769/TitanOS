@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package titan.events;
+
+import "google/protobuf/timestamp.pb2";
+import "google/protobuf/struct.pb2";
+
+option go_package = "github.com/ChaitanyaJoshi1769/TitanOS/services/proto/events";
+
+service EventBusService {
+  rpc PublishEvent(PublishEventRequest) returns (PublishEventResponse);
+  rpc SubscribeToEvents(SubscribeRequest) returns (stream EventMessage);
+  rpc GetEventSchema(GetEventSchemaRequest) returns (EventSchema);
+  rpc ListEventTypes(ListEventTypesRequest) returns (ListEventTypesResponse);
+}
+
+message CloudEvent {
+  string specversion = 1;
+  string type = 2;
+  string source = 3;
+  string id = 4;
+  google.protobuf.Timestamp time = 5;
+  string datacontenttype = 6;
+  string subject = 7;
+  string dataschema = 8;
+  map<string, string> attributes = 9;
+  google.protobuf.Struct data = 10;
+}
+
+message PublishEventRequest {
+  CloudEvent event = 1;
+}
+
+message PublishEventResponse {
+  string event_id = 1;
+  string partition_key = 2;
+  int64 offset = 3;
+  bool success = 4;
+}
+
+message SubscribeRequest {
+  string event_type_filter = 1;
+  string source_filter = 2;
+  string subject_filter = 3;
+  int32 consumer_group_id = 4;
+}
+
+message EventMessage {
+  CloudEvent event = 1;
+  int32 partition = 2;
+  int64 offset = 3;
+  google.protobuf.Timestamp received_time = 4;
+}
+
+message GetEventSchemaRequest {
+  string event_type = 1;
+}
+
+message EventSchema {
+  string event_type = 1;
+  string version = 2;
+  google.protobuf.Struct schema = 3;
+  string description = 4;
+}
+
+message ListEventTypesRequest {
+  string source_filter = 1;
+}
+
+message ListEventTypesResponse {
+  repeated string event_types = 1;
+}
+
+// Task Events
+message TaskSubmittedEvent {
+  string task_id = 1;
+  string project_id = 2;
+  string name = 3;
+  map<string, string> labels = 4;
+}
+
+message TaskScheduledEvent {
+  string task_id = 1;
+  string node_id = 2;
+  google.protobuf.Timestamp scheduled_at = 3;
+}
+
+message TaskCompletedEvent {
+  string task_id = 1;
+  string node_id = 2;
+  google.protobuf.Timestamp completed_at = 3;
+  int32 exit_code = 4;
+  string output = 5;
+}
+
+message TaskFailedEvent {
+  string task_id = 1;
+  string node_id = 2;
+  google.protobuf.Timestamp failed_at = 3;
+  string error_message = 4;
+}
+
+// Workflow Events
+message WorkflowExecutionStartedEvent {
+  string workflow_id = 1;
+  string execution_id = 2;
+  google.protobuf.Timestamp started_at = 3;
+  map<string, string> input = 4;
+}
+
+message WorkflowExecutionCompletedEvent {
+  string workflow_id = 1;
+  string execution_id = 2;
+  google.protobuf.Timestamp completed_at = 3;
+  map<string, string> output = 4;
+}
+
+message ActivityExecutedEvent {
+  string workflow_id = 1;
+  string execution_id = 2;
+  string activity_id = 3;
+  google.protobuf.Timestamp executed_at = 4;
+  map<string, string> result = 5;
+}
+
+// Agent Events
+message AgentCreatedEvent {
+  string agent_id = 1;
+  string user_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  map<string, string> config = 4;
+}
+
+message AgentWokenEvent {
+  string agent_id = 1;
+  google.protobuf.Timestamp woken_at = 2;
+}
+
+message AgentSleptEvent {
+  string agent_id = 1;
+  google.protobuf.Timestamp slept_at = 2;
+}
+
+message AgentToolExecutedEvent {
+  string agent_id = 1;
+  string tool_name = 2;
+  google.protobuf.Timestamp executed_at = 3;
+  map<string, string> input = 4;
+  map<string, string> output = 5;
+}
+
+// Node Events
+message NodeHeartbeatEvent {
+  string node_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  float cpu_usage = 3;
+  float memory_usage = 4;
+  int32 running_tasks = 5;
+}
+
+message NodeHealthEvent {
+  string node_id = 1;
+  string status = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  string message = 4;
+}
