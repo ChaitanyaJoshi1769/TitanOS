@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package titan.scheduler.v1;
+
+option go_package = "github.com/ChaitanyaJoshi1769/TitanOS/services/scheduler/pb";
+
+import "google/protobuf/timestamp.proto";
+
+service SchedulerService {
+  rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc SubmitTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+  rpc UpdateTaskStatus(UpdateTaskStatusRequest) returns (UpdateTaskStatusResponse);
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+}
+
+// Node Registration
+message RegisterNodeRequest {
+  string node_id = 1;
+  string hostname = 2;
+  int32 cpu_cores = 3;
+  int32 memory_gb = 4;
+  int32 gpu_count = 5;
+  int32 disk_gb = 6;
+  map<string, string> labels = 7;
+}
+
+message RegisterNodeResponse {
+  string node_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// Heartbeat
+message HeartbeatRequest {
+  string node_id = 1;
+  int32 available_cpu = 2;
+  int32 available_memory = 3;
+  int32 available_gpu = 4;
+  int32 running_tasks = 5;
+  float cpu_usage_percent = 6;
+  float memory_usage_percent = 7;
+  string status = 8;
+}
+
+message HeartbeatResponse {
+  bool success = 2;
+  string message = 3;
+  repeated TaskAssignment tasks_to_run = 4;
+}
+
+// Task Submission
+message SubmitTaskRequest {
+  string task_id = 1;
+  string project_id = 2;
+  string name = 3;
+  bytes input_data = 4;
+  int32 timeout_seconds = 5;
+  int32 priority = 6;
+  int32 max_retries = 7;
+  map<string, string> labels = 8;
+  string required_gpu_type = 9;
+}
+
+message SubmitTaskResponse {
+  string task_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// Task Status Update
+message UpdateTaskStatusRequest {
+  string task_id = 1;
+  string node_id = 2;
+  string status = 3;
+  bytes output_data = 4;
+  string error_message = 5;
+  google.protobuf.Timestamp completed_at = 6;
+}
+
+message UpdateTaskStatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Get Task
+message GetTaskRequest {
+  string task_id = 1;
+}
+
+message GetTaskResponse {
+  Task task = 1;
+}
+
+// List Tasks
+message ListTasksRequest {
+  string project_id = 1;
+  string status = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+  int32 total = 2;
+}
+
+// Get Node
+message GetNodeRequest {
+  string node_id = 1;
+}
+
+message GetNodeResponse {
+  Node node = 1;
+}
+
+// List Nodes
+message ListNodesRequest {
+  string project_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListNodesResponse {
+  repeated Node nodes = 1;
+  int32 total = 2;
+}
+
+// Data Models
+message Node {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string hostname = 4;
+  string status = 5;
+  int32 cpu_cores = 6;
+  int32 memory_gb = 7;
+  int32 gpu_count = 8;
+  int32 disk_gb = 9;
+  map<string, string> labels = 10;
+  google.protobuf.Timestamp last_heartbeat = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message Task {
+  string id = 1;
+  string project_id = 2;
+  string node_id = 3;
+  string name = 4;
+  string status = 5;
+  bytes input_data = 6;
+  bytes output_data = 7;
+  string error_message = 8;
+  int32 retry_count = 9;
+  int32 max_retries = 10;
+  int32 timeout_seconds = 11;
+  int32 priority = 12;
+  map<string, string> labels = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp started_at = 15;
+  google.protobuf.Timestamp completed_at = 16;
+  google.protobuf.Timestamp updated_at = 17;
+}
+
+message TaskAssignment {
+  string task_id = 1;
+  bytes input_data = 2;
+  int32 timeout_seconds = 3;
+}
