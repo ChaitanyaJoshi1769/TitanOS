@@ -1,0 +1,175 @@
+groups:
+  - name: titan_os_alerts
+    interval: 30s
+    rules:
+      # API Gateway alerts
+      - alert: HighAPIErrorRate
+        expr: |
+          (rate(titan_requests_failed_total[5m]) / rate(titan_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: gateway
+        annotations:
+          summary: "High API error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      - alert: APILatencyHigh
+        expr: histogram_quantile(0.99, rate(titan_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: gateway
+        annotations:
+          summary: "API latency is high"
+          description: "p99 latency is {{ $value }}s (threshold: 1s)"
+
+      # Task scheduling alerts
+      - alert: TaskQueueBacklog
+        expr: titan_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: scheduler
+        annotations:
+          summary: "Large task queue backlog"
+          description: "Queue size is {{ $value }} tasks (threshold: 1000)"
+
+      - alert: HighTaskFailureRate
+        expr: |
+          (rate(titan_tasks_failed_total[5m]) / rate(titan_tasks_submitted_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: scheduler
+        annotations:
+          summary: "High task failure rate"
+          description: "Failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Workflow alerts
+      - alert: WorkflowExecutionTimeout
+        expr: |
+          histogram_quantile(0.95, rate(titan_workflow_execution_time_seconds_bucket[5m])) > 3600
+        for: 10m
+        labels:
+          severity: warning
+          component: workflow
+        annotations:
+          summary: "Workflows taking too long"
+          description: "p95 execution time is {{ $value }}s (> 1 hour)"
+
+      - alert: HighWorkflowFailureRate
+        expr: |
+          (rate(titan_workflows_failed_total[5m]) / rate(titan_workflows_started_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: workflow
+        annotations:
+          summary: "High workflow failure rate"
+          description: "Failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Database alerts
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          postgres_stat_activity_count > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value }} connections in use (limit: 100)"
+
+      - alert: DatabaseQueryLatencyHigh
+        expr: |
+          rate(postgres_client_backend_execute_time_seconds_sum[5m]) /
+          rate(postgres_client_backend_execute_count_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database query latency is high"
+          description: "Average query time is {{ $value }}s (threshold: 0.5s)"
+
+      # Cache alerts
+      - alert: LowCacheHitRate
+        expr: |
+          rate(redis_evicted_keys_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Cache hit rate is low"
+          description: "Evictions rate is {{ $value }}/sec"
+
+      # Node/Infrastructure alerts
+      - alert: NodeDown
+        expr: |
+          titan_node_health == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: node
+        annotations:
+          summary: "Node is down"
+          description: "Node {{ $labels.node_id }} is not responding"
+
+      - alert: HighCPUUsage
+        expr: |
+          node_cpu_seconds_total > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }} (threshold: 80%)"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)"
+
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Low disk space"
+          description: "Available space is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Event Bus alerts
+      - alert: KafkaLagHigh
+        expr: |
+          kafka_consumergroup_lag > 10000
+        for: 10m
+        labels:
+          severity: warning
+          component: events
+        annotations:
+          summary: "Event processing lag is high"
+          description: "Lag is {{ $value }} messages"
+
+      # Service availability
+      - alert: ServiceDown
+        expr: |
+          up{job=~"titan-.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "Service is down"
+          description: "Service {{ $labels.job }} is not responding"
