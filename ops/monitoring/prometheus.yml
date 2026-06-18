@@ -1,0 +1,83 @@
+# Titan OS Prometheus Configuration
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "titan-os-dev"
+    environment: "development"
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            # - 'localhost:9093'
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - 'alert_rules.yml'
+  # - 'recording_rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # PostgreSQL metrics (via postgres exporter)
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["localhost:9187"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Redis metrics
+  - job_name: "redis"
+    static_configs:
+      - targets: ["localhost:6379"]
+
+  # Kafka metrics (via JMX exporter)
+  - job_name: "kafka"
+    static_configs:
+      - targets: ["localhost:5556"]
+
+  # Node exporter (if running)
+  - job_name: "node"
+    static_configs:
+      - targets: ["localhost:9100"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Docker containers
+  - job_name: "docker"
+    static_configs:
+      - targets: ["localhost:9323"]
+
+  # Application metrics (will be configured when services are deployed)
+  - job_name: "titan-scheduler"
+    static_configs:
+      - targets: ["localhost:8001"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+
+  - job_name: "titan-workflow-engine"
+    static_configs:
+      - targets: ["localhost:8002"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+
+  - job_name: "titan-gateway"
+    static_configs:
+      - targets: ["localhost:8000"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+
+  - job_name: "titan-agent-runtime"
+    static_configs:
+      - targets: ["localhost:8003"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
