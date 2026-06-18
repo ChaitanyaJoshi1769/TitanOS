@@ -1,0 +1,168 @@
+# Global values
+global:
+  environment: production
+  domain: titan-os.example.com
+
+# Gateway configuration
+gateway:
+  replicaCount: 3
+  image:
+    repository: titanos/gateway
+    tag: latest
+    pullPolicy: IfNotPresent
+  logLevel: info
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Scheduler configuration
+scheduler:
+  replicaCount: 3
+  image:
+    repository: titanos/scheduler
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Workflow Engine configuration
+workflowEngine:
+  replicaCount: 2
+  image:
+    repository: titanos/workflow-engine
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Agent Runtime configuration
+agentRuntime:
+  replicaCount: 3
+  image:
+    repository: titanos/agent-runtime
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Event Bus configuration
+eventBus:
+  replicaCount: 2
+  image:
+    repository: titanos/event-bus
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# State Store configuration
+stateStore:
+  replicaCount: 1
+  image:
+    repository: titanos/state-store
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Object Store configuration
+objectStore:
+  replicaCount: 1
+  image:
+    repository: titanos/object-store
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Cache Service configuration
+cache:
+  replicaCount: 1
+  image:
+    repository: titanos/cache
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Security Service configuration
+security:
+  replicaCount: 2
+  image:
+    repository: titanos/security
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    username: titan
+    password: titan_secure_password
+    database: titan_db
+  primary:
+    persistence:
+      size: 100Gi
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    password: redis_secure_password
+  master:
+    persistence:
+      size: 50Gi
+
+# Kafka configuration
+kafka:
+  enabled: true
+  replicaCount: 3
+  defaultReplicationFactor: 3
+  defaultMinIsrFactor: 2
+
+# Prometheus configuration
+prometheus:
+  enabled: true
+  retention: 30d
+  storageSize: 50Gi
+
+# Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: grafana_secure_password
+  persistence:
+    enabled: true
+    size: 10Gi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: titan-os.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: titan-os-tls
+      hosts:
+        - titan-os.example.com
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 85
+
+# Network Policies
+networkPolicies:
+  enabled: true
+  ingress:
+    enabled: true
+  egress:
+    enabled: true
+
+# Resource Quotas
+resourceQuota:
+  enabled: true
+  pods: "500"
+  requests:
+    cpu: "200"
+    memory: "500Gi"
+  limits:
+    cpu: "400"
+    memory: "1000Gi"
